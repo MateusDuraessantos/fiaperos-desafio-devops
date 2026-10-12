@@ -1,0 +1,127 @@
+name: CI/CD - Greenhouse API
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_VERSION: '8.0.x'
+
+  # Azure Container Registry
+  ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
+
+  # Nome da imagem Docker
+  IMAGE_NAME: greenhouse-api
+
+  # Azure Web Apps
+  AZURE_WEBAPP_STAGING: ${{ secrets.AZURE_WEBAPP_STAGING }}
+  AZURE_WEBAPP_PRODUCTION: ${{ secrets.AZURE_WEBAPP_PRODUCTION }}
+
+jobs:
+
+  # =========================================================
+  # 1. BUILD E TESTES
+  # =========================================================
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restaurar dependências
+        run: dotnet restore
+
+      - name: Build da aplicação
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Executar testes
+        run: dotnet test --configuration Release --no-build
+
+
+  # =========================================================
+  # 2. CRIAR E PUBLICAR IMAGEM DOCKER
+  # =========================================================
+  docker:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    needs: build-and-test
+
+    steps:
+
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Login no Azure Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build da imagem Docker
+        run: |
+          docker build \
+            -t ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            -t ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest \
+            .
+
+      - name: Publicar imagem no Azure Container Registry
+        run: |
+          docker push ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker push ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
+
+
+  # =========================================================
+  # 3. DEPLOY STAGING
+  # =========================================================
+  deploy-staging:
+    name: Deploy Staging
+    runs-on: ubuntu-latest
+    needs: docker
+
+    environment:
+      name: staging
+
+    steps:
+
+      - name: Deploy para Staging
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_STAGING }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_STAGING }}
+          images: ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+
+  # =========================================================
+  # 4. DEPLOY PRODUÇÃO
+  # =========================================================
+  deploy-production:
+    name: Deploy Production
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+
+    environment:
+      name: production
+
+    steps:
+
+      - name: Deploy para Produção
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_PRODUCTION }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_PRODUCTION }}
+          images: ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
