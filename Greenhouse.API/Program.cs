@@ -9,6 +9,16 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var deploymentEnvironment = builder.Configuration["Deployment:Environment"]
+    ?? builder.Environment.EnvironmentName;
+var (environmentLabel, environmentColor) = deploymentEnvironment.ToLowerInvariant() switch
+{
+    "local" or "development" => ("LOCAL", "#1d4ed8"),
+    "staging" => ("STAGING", "#92400e"),
+    "production" => ("PRODUÇÃO", "#b91c1c"),
+    _ => ("AMBIENTE NÃO IDENTIFICADO", "#374151")
+};
+
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
@@ -16,9 +26,9 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "Greenhouse API",
+        Title = $"Greenhouse API — {environmentLabel}",
         Version = "v1",
-        Description = "Plataforma ESG para monitoramento e gestão sustentável de estufas inteligentes"
+        Description = $"**Ambiente: {environmentLabel}**\n\nPlataforma ESG para monitoramento e gestão sustentável de estufas inteligentes"
     });
 
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -92,8 +102,10 @@ using (var scope = app.Services.CreateScope())
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Greenhouse API v1");
-    c.RoutePrefix = "swagger";
+    c.DocumentTitle = $"Greenhouse API — {environmentLabel}";
+    c.SwaggerEndpoint("./swagger/v1/swagger.json", $"Greenhouse API v1 — {environmentLabel}");
+    c.InjectStylesheet("./environment.css");
+    c.RoutePrefix = string.Empty;
 });
 
 app.UseMiddleware<ExceptionMiddleware>();
@@ -102,6 +114,29 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapGet("/swagger", (HttpContext context) => Results.Redirect($"{context.Request.PathBase}/"))
+    .ExcludeFromDescription();
+app.MapGet("/swagger/index.html", (HttpContext context) => Results.Redirect($"{context.Request.PathBase}/"))
+    .ExcludeFromDescription();
+
+app.MapGet("/environment.css", () => Results.Text($$"""
+    .swagger-ui .topbar {
+        border-bottom: 6px solid {{environmentColor}};
+    }
+    .swagger-ui .topbar::after {
+        content: "AMBIENTE: {{environmentLabel}}";
+        display: block;
+        width: fit-content;
+        margin: 10px auto;
+        padding: 8px 20px;
+        border-radius: 6px;
+        background: {{environmentColor}};
+        color: #fff;
+        font: bold 16px sans-serif;
+        letter-spacing: 1px;
+    }
+    """, "text/css")).ExcludeFromDescription();
 
 app.Run();
 
