@@ -1,0 +1,311 @@
+{
+  "info": {
+    "name": "Greenhouse API",
+    "description": "Plataforma ESG para monitoramento e gestão sustentável de estufas inteligentes",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('token', json.token);",
+                  "    pm.test('Login retornou token', () => pm.expect(json.token).to.not.be.empty);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"Admin@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Estufas",
+      "item": [
+        {
+          "name": "Listar Estufas",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/estufas?page=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "estufas"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar Estufa por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/estufas/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "estufas", "1"]
+            }
+          }
+        },
+        {
+          "name": "Criar Estufa",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Estufa Solar Norte\",\n  \"localizacao\": \"Bloco A - Setor Norte\",\n  \"area\": 250.5,\n  \"tipoCultivo\": \"Tomate Cereja\",\n  \"ativa\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/estufas",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "estufas"]
+            }
+          }
+        },
+        {
+          "name": "Atualizar Estufa",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Estufa Solar Norte - Atualizada\",\n  \"localizacao\": \"Bloco A - Setor Norte\",\n  \"area\": 300.0,\n  \"tipoCultivo\": \"Alface Hidropônica\",\n  \"ativa\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/estufas/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "estufas", "1"]
+            }
+          }
+        },
+        {
+          "name": "Deletar Estufa",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/estufas/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "estufas", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sensores",
+      "item": [
+        {
+          "name": "Listar Sensores",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sensores?page=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sensores"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filtrar Sensores por Tipo",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sensores?tipo=temperatura",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sensores"],
+              "query": [
+                { "key": "tipo", "value": "temperatura" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar Sensor por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sensores/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sensores", "1"]
+            }
+          }
+        },
+        {
+          "name": "Criar Sensor",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estufaId\": 1,\n  \"tipo\": \"temperatura\",\n  \"valorAtual\": 24.5,\n  \"unidade\": \"°C\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sensores",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sensores"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Alertas",
+      "item": [
+        {
+          "name": "Listar Alertas",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/alertas?page=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "alertas"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar Alerta por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/alertas/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "alertas", "1"]
+            }
+          }
+        },
+        {
+          "name": "Criar Alerta",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estufaId\": 1,\n  \"mensagem\": \"Temperatura acima do limite máximo permitido\",\n  \"tipo\": \"Critico\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/alertas",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "alertas"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Obter Dashboard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Tem estufasAtivas', () => pm.expect(pm.response.json()).to.have.property('estufasAtivas'));",
+                  "pm.test('Tem sensoresOnline', () => pm.expect(pm.response.json()).to.have.property('sensoresOnline'));",
+                  "pm.test('Tem alertasPendentes', () => pm.expect(pm.response.json()).to.have.property('alertasPendentes'));",
+                  "pm.test('Tem mediaTemperatura', () => pm.expect(pm.response.json()).to.have.property('mediaTemperatura'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

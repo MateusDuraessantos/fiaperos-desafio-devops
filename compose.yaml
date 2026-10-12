@@ -1,0 +1,35 @@
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: ${SQL_PASSWORD:?Defina SQL_PASSWORD no arquivo .env}
+    volumes:
+      - sql-data:/var/opt/mssql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - SQLCMDPASSWORD="$${MSSQL_SA_PASSWORD}" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -C -b -Q "SELECT 1" > /dev/null
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  api:
+    build:
+      context: ./Greenhouse.API
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: "Server=db;Database=GreenhouseDb;User Id=sa;Password=${SQL_PASSWORD:?Defina SQL_PASSWORD no arquivo .env};TrustServerCertificate=True;"
+      JwtSettings__SecretKey: ${JWT_SECRET:?Defina JWT_SECRET no arquivo .env}
+      AdminCredentials__Username: ${ADMIN_USERNAME:-admin}
+      AdminCredentials__Password: ${ADMIN_PASSWORD:?Defina ADMIN_PASSWORD no arquivo .env}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  sql-data:
