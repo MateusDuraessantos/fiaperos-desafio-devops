@@ -13,27 +13,16 @@ permissions:
 env:
   DOTNET_VERSION: '8.0.x'
 
-  # Azure Container Registry
-  ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
-
-  # Nome da imagem Docker
-  IMAGE_NAME: greenhouse-api
-
-  # Azure Web Apps
-  AZURE_WEBAPP_STAGING: ${{ secrets.AZURE_WEBAPP_STAGING }}
-  AZURE_WEBAPP_PRODUCTION: ${{ secrets.AZURE_WEBAPP_PRODUCTION }}
-
 jobs:
 
-  # =========================================================
-  # 1. BUILD E TESTES
-  # =========================================================
-  build-and-test:
-    name: Build and Test
+  # =====================================================
+  # 1 - BUILD, TESTES E VALIDAÇÃO DO DOCKER
+  # =====================================================
+  build:
+    name: Build, Test and Docker
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout do código
         uses: actions/checkout@v4
 
@@ -51,77 +40,61 @@ jobs:
       - name: Executar testes
         run: dotnet test --configuration Release --no-build
 
-
-  # =========================================================
-  # 2. CRIAR E PUBLICAR IMAGEM DOCKER
-  # =========================================================
-  docker:
-    name: Build and Push Docker Image
-    runs-on: ubuntu-latest
-    needs: build-and-test
-
-    steps:
-
-      - name: Checkout do código
-        uses: actions/checkout@v4
-
-      - name: Login no Azure Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.ACR_LOGIN_SERVER }}
-          username: ${{ secrets.ACR_USERNAME }}
-          password: ${{ secrets.ACR_PASSWORD }}
-
+      # Valida se o Dockerfile consegue gerar a imagem
       - name: Build da imagem Docker
-        run: |
-          docker build \
-            -t ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
-            -t ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest \
-            .
+        run: docker build -t greenhouse-api:test .
 
-      - name: Publicar imagem no Azure Container Registry
-        run: |
-          docker push ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          docker push ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
+      - name: Publicar aplicação
+        run: dotnet publish --configuration Release --no-build --output ./publish
+
+      - name: Salvar artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: greenhouse-api
+          path: ./publish
 
 
-  # =========================================================
-  # 3. DEPLOY STAGING
-  # =========================================================
+  # =====================================================
+  # 2 - DEPLOY STAGING
+  # =====================================================
   deploy-staging:
     name: Deploy Staging
     runs-on: ubuntu-latest
-    needs: docker
-
-    environment:
-      name: staging
+    needs: build
 
     steps:
+      - name: Baixar aplicação
+        uses: actions/download-artifact@v4
+        with:
+          name: greenhouse-api
+          path: ./publish
 
-      - name: Deploy para Staging
+      - name: Deploy no Azure - Staging
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ env.AZURE_WEBAPP_STAGING }}
+          app-name: greenhouse-staging
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_STAGING }}
-          images: ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          package: ./publish
 
 
-  # =========================================================
-  # 4. DEPLOY PRODUÇÃO
-  # =========================================================
+  # =====================================================
+  # 3 - DEPLOY PRODUÇÃO
+  # =====================================================
   deploy-production:
     name: Deploy Production
     runs-on: ubuntu-latest
     needs: deploy-staging
 
-    environment:
-      name: production
-
     steps:
+      - name: Baixar aplicação
+        uses: actions/download-artifact@v4
+        with:
+          name: greenhouse-api
+          path: ./publish
 
-      - name: Deploy para Produção
+      - name: Deploy no Azure - Production
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ env.AZURE_WEBAPP_PRODUCTION }}
+          app-name: greenhouse-production
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_PRODUCTION }}
-          images: ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          package: ./publish
