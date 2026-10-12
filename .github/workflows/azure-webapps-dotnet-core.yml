@@ -33,20 +33,38 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restaurar dependências
-        run: dotnet restore ./Greenhouse.API/Greenhouse.API.csproj
+        run: dotnet restore ./tests/Greenhouse.API.Tests/Greenhouse.API.Tests.csproj
 
       - name: Build da aplicação
-        run: dotnet build ./Greenhouse.API/Greenhouse.API.csproj --configuration Release --no-restore
+        run: dotnet build ./tests/Greenhouse.API.Tests/Greenhouse.API.Tests.csproj --configuration Release --no-restore
 
       - name: Executar testes
-        run: dotnet test ./Greenhouse.API/Greenhouse.API.csproj --configuration Release --no-build --no-restore
+        run: dotnet test ./tests/Greenhouse.API.Tests/Greenhouse.API.Tests.csproj --configuration Release --no-build --no-restore --logger "trx;LogFileName=tests.trx" --results-directory ./test-results
+
+      - name: Confirmar que testes reais foram executados
+        run: |
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          root = ET.parse("test-results/tests.trx").getroot()
+          counters = root.find(".//{*}Counters")
+          if counters is None or int(counters.get("executed", "0")) == 0:
+              raise SystemExit("Nenhum teste foi executado.")
+          PY
+
+      - name: Salvar resultados dos testes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: ./test-results/*.trx
+          if-no-files-found: error
 
       # Valida se o Dockerfile consegue gerar a imagem
       - name: Build da imagem Docker
-        run: docker build -t greenhouse-api:test ./Greenhouse.API
+        run: docker build -t greenhouse-api:test ./src/Greenhouse.API
 
       - name: Publicar aplicação
-        run: dotnet publish ./Greenhouse.API/Greenhouse.API.csproj --configuration Release --no-build --no-restore --output ./publish
+        run: dotnet publish ./src/Greenhouse.API/Greenhouse.API.csproj --configuration Release --no-build --no-restore --output ./publish
 
       - name: Identificar ambiente no pacote publicado
         env:
