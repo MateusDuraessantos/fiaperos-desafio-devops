@@ -5,8 +5,8 @@ API ASP.NET Core para gestao de estufas, sensores e alertas, com SQL Server.
 ## Execucao local com Docker Compose
 
 Instale e inicie o Docker Desktop com containers Linux e Docker Compose 2.22.0
-ou superior. Nao e necessario instalar
-o SDK .NET ou SQL Server no computador.
+ou superior. Para executar via Docker, nao e necessario instalar o SDK .NET
+ou SQL Server no computador.
 
 Na raiz do projeto, execute no PowerShell:
 
@@ -22,7 +22,7 @@ alteracoes na pasta `Greenhouse.API`, o Compose reconstroi a imagem e recria o
 container da API automaticamente. Os dados do banco permanecem no volume.
 Arquivos gerados em `bin` e `obj` nao disparam reconstrucoes.
 
-O comando acima tambem atualiza a imagem na primeira inicializacao. Aguarde a
+O comando acima tambem verifica e reconstroi a imagem ao iniciar, se necessario. Aguarde a
 reconstrucao terminar e atualize o navegador para visualizar as mudancas.
 Use Ctrl+C para encerrar o acompanhamento e parar os containers.
 
@@ -36,8 +36,10 @@ docker compose up --build --watch
 Alteracoes em `.env` ou `compose.yaml` exigem reiniciar o comando para aplicar
 a nova configuracao. O monitoramento automatico cobre os arquivos da API.
 
-Abra http://localhost:8080/ e execute `POST /api/auth/login` com os
-valores de ADMIN_USERNAME e ADMIN_PASSWORD do arquivo `.env`. Os exemplos sao:
+Abra http://localhost:8080/ para acessar o Swagger. Nele, selecione
+`POST /api/auth/login`, clique em **Try it out** e depois em **Execute**, usando
+os valores de ADMIN_USERNAME e ADMIN_PASSWORD do arquivo `.env`. Com os valores
+de `.env.example`, o corpo da requisicao e:
 
 ```json
 {
@@ -46,7 +48,7 @@ valores de ADMIN_USERNAME e ADMIN_PASSWORD do arquivo `.env`. Os exemplos sao:
 }
 ```
 
-Copie o token retornado e informe `Bearer SEU_TOKEN` em Authorize.
+Copie o campo `token` retornado e informe `Bearer ` seguido desse token em **Authorize**.
 Crie uma estufa antes de cadastrar sensores ou alertas.
 
 ## Comandos uteis
@@ -76,5 +78,5 @@ Os valores em `.env.example` sao apenas para desenvolvimento local. O arquivo
 nao altera automaticamente a senha armazenada no banco existente; mantenha os
 valores consistentes ou altere a senha no SQL Server.
 
-Se a porta 8080 estiver ocupada por uma execucao anterior, pare esse container
+Se a porta 8080 estiver ocupada por uma execucao anterior, pare a aplicacao ou container
 antes de iniciar o Compose.
