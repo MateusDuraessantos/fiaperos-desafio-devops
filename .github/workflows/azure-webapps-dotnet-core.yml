@@ -16,9 +16,6 @@ env:
 
 jobs:
 
-  # =====================================================
-  # 1 - BUILD, TESTES E VALIDAÇÃO DO DOCKER
-  # =====================================================
   build:
     name: Build, Test and Docker
     runs-on: ubuntu-latest
@@ -59,7 +56,6 @@ jobs:
           path: ./test-results/*.trx
           if-no-files-found: error
 
-      # Valida se o Dockerfile consegue gerar a imagem
       - name: Build da imagem Docker
         run: docker build -t greenhouse-api:test ./src/Greenhouse.API
 
@@ -93,9 +89,6 @@ jobs:
           path: ./publish
 
 
-  # =====================================================
-  # 2 - DEPLOY STAGING
-  # =====================================================
   deploy-staging:
     name: Deploy Staging
     runs-on: ubuntu-latest
@@ -117,9 +110,6 @@ jobs:
           package: ./publish
 
 
-  # =====================================================
-  # 3 - DEPLOY PRODUÇÃO
-  # =====================================================
   deploy-production:
     name: Deploy Production
     runs-on: ubuntu-latest

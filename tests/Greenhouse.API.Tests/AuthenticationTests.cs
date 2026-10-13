@@ -13,7 +13,6 @@ namespace Greenhouse.API.Tests;
 
 public class AuthenticationTests
 {
-    // Credenciais exclusivas dos testes, sem acesso aos ambientes publicados.
     private const string Secret = "TestOnly_Key_For_HS256_AtLeast32Bytes!";
 
     private static IConfiguration Configuration() => new ConfigurationBuilder()

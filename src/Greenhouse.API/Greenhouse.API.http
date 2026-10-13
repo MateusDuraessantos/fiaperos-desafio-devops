@@ -1,6 +1,0 @@
-@Greenhouse.API_HostAddress = http://localhost:8080
-
-GET {{Greenhouse.API_HostAddress}}/swagger/v1/swagger.json
-Accept: application/json
-
-###
