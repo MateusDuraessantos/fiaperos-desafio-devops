@@ -29,7 +29,19 @@ Validações do código atualizado:
 - Página inicial HTTP 200, identificação LOCAL, login com emissão de token e rota protegida retornando 401 sem token.
 - ZIP inspecionado sem `.env`, `bin` ou `obj`.
 
-Não foram validados containers ou persistência com SQL Server, pois Docker não está disponível no ambiente da auditoria. A captura local demonstra apenas a interface do pacote publicado e não é evidência de conexão com banco.
+A captura local demonstra apenas a interface do pacote publicado e não é evidência de conexão com banco.
+
+## Validação complementar em 13/10/2026
+
+- ZIP gerado e inspecionado: 43 arquivos, sem `.env`, `bin`, `obj` ou `.git`.
+- Configuração Compose e build Docker aprovados na cópia extraída do ZIP.
+- API e SQL Server executados em containers isolados, com acesso à API na porta 18081.
+- Swagger HTTP 200, login, cadastro e consulta de uma estufa aprovados.
+- Persistência confirmada após remover e recriar os containers, preservando o volume do SQL Server.
+- Registro de teste removido e containers de validação encerrados.
+- Links de staging e produção retornaram HTTP 200.
+
+Essa validação complementa os prints existentes. A execução da versão atual do workflow nas duas branches e a atualização dos prints dos deploys continuam pendentes.
 
 Não capture tokens, senhas, publish profiles ou telas de secrets.
 
