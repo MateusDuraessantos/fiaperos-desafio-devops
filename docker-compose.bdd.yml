@@ -16,7 +16,7 @@ services:
     build:
       context: .
       dockerfile: tests/Dockerfile
-    command: ["--provider", "sqlserver"]
+    command: ["-Provedor", "sqlserver"]
     environment:
       BDD_SQLSERVER_CONNECTION: "Server=bdd-db,1433;Database=master;User Id=sa;Password=BddSqlOnly@2026!;TrustServerCertificate=True;Connect Timeout=10"
     volumes:

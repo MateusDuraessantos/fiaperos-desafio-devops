@@ -8,14 +8,13 @@ New-Item -ItemType Directory -Path $packageRoot | Out-Null
 $allowedRoots = @('src', 'tests', '.github')
 $files = @('README.md', '.gitignore', '.dockerignore', '.env.example', 'docker-compose.yml',
     'docker-compose.bdd.yml', 'Greenhouse.sln', 'global.json', 'docs/BDD.md',
-    'scripts/test_bdd.py', 'scripts/Testar-Bdd.ps1', 'scripts/Validar-Entrega.ps1') |
+    'scripts/Testar-Bdd.ps1', 'scripts/Validar-Entrega.ps1') |
     ForEach-Object { Get-Item -LiteralPath (Join-Path $projectRoot $_) }
 $files += foreach ($root in $allowedRoots) {
     Get-ChildItem -LiteralPath (Join-Path $projectRoot $root) -File -Recurse -Force |
         Where-Object {
             $_.FullName -notmatch '[\\/](bin|obj|PublishProfiles)[\\/]' -and
-            $_.Name -notmatch '^\.env($|\.)|\.(user|publishsettings|pubxml|pfx|p12|pem|key)$|\.feature\.cs$|\.pyc$' -and
-            $_.FullName -notmatch '[\\/]__pycache__[\\/]'
+            $_.Name -notmatch '^\.env($|\.)|\.(user|publishsettings|pubxml|pfx|p12|pem|key)$|\.feature\.cs$'
         }
 }
 Add-Type -AssemblyName System.IO.Compression
@@ -40,8 +39,7 @@ Write-Output "Pasta limpa: $packageRoot"
 if (!$SomentePacote) {
     Push-Location $packageRoot
     try {
-        python scripts/test_bdd.py
-        if ($LASTEXITCODE -ne 0) { throw 'Testes na copia extraida falharam.' }
+        & ./scripts/Testar-Bdd.ps1
         if ($ComDocker) {
             docker compose config --quiet
             if ($LASTEXITCODE -ne 0) { throw 'Configuracao Compose invalida.' }

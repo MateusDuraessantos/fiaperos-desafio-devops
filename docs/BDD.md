@@ -69,6 +69,8 @@ Os resultados ficam em `test-results/sqlserver/` ou `test-results/sqlite/`. O re
 
 O GitHub Actions executa as suítes com SQL Server antes do build Docker, publish e deploy. O job de validação exige testes aprovados e cobertura de todas as operações. Os relatórios são publicados como artefatos e a matriz é incluída no resumo da execução. As configurações completas estão em `.github/workflows/azure-webapps-dotnet-core.yml`.
 
+O log detalhado do runner .NET apresenta os cenários Gherkin e seus passos Dado/Quando/Então, junto das respostas HTTP e dos contratos validados. Os scripts PowerShell executam os projetos de teste C# e verificam os relatórios gerados.
+
 ## Referências técnicas
 
 - [Reqnroll](https://docs.reqnroll.net/latest/)

@@ -45,22 +45,18 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Configurar Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
       - name: Restaurar dependências
         run: dotnet restore Greenhouse.sln
 
       - name: Build da aplicação
         run: dotnet build Greenhouse.sln --configuration Release --no-restore
 
-      - name: Executar unitários e BDD com SQL Server e verificar cobertura das APIs
+      - name: Executar cenários BDD em Gherkin e validar as APIs
+        shell: pwsh
         env:
           # Credencial exclusiva do serviço descartável de testes, sem acesso ao Azure.
           BDD_SQLSERVER_CONNECTION: 'Server=localhost,1433;Database=master;User Id=sa;Password=BddSqlOnly@2026!;TrustServerCertificate=True;Connect Timeout=10'
-        run: python scripts/test_bdd.py --no-build --provider sqlserver
+        run: ./scripts/Testar-Bdd.ps1 -SemBuild -Provedor sqlserver
 
       - name: Salvar resultados dos testes
         if: always()
@@ -77,24 +73,18 @@ jobs:
         run: dotnet publish ./src/Greenhouse.API/Greenhouse.API.csproj --configuration Release --no-build --no-restore --output ./publish
 
       - name: Identificar ambiente no pacote publicado
+        shell: pwsh
         env:
           DEPLOYMENT_BRANCH: ${{ github.ref }}
         run: |
-          python3 - <<'PY'
-          import json
-          import os
-          from pathlib import Path
-
-          environments = {
-              "refs/heads/dev": "Staging",
-              "refs/heads/main": "Production",
+          $deployment = switch ($env:DEPLOYMENT_BRANCH) {
+            'refs/heads/dev' { 'Staging' }
+            'refs/heads/main' { 'Production' }
+            default { 'Unknown' }
           }
-          environment = environments.get(os.environ["DEPLOYMENT_BRANCH"], "Unknown")
-          path = Path("publish/appsettings.json")
-          settings = json.loads(path.read_text(encoding="utf-8-sig"))
-          settings["Deployment"] = {"Environment": environment}
-          path.write_text(json.dumps(settings, ensure_ascii=False, indent=2), encoding="utf-8")
-          PY
+          $settings = Get-Content ./publish/appsettings.json -Raw | ConvertFrom-Json
+          $settings | Add-Member -MemberType NoteProperty -Name Deployment -Value @{ Environment = $deployment } -Force
+          $settings | ConvertTo-Json -Depth 20 | Set-Content ./publish/appsettings.json -Encoding utf8
 
       - name: Salvar artefato
         uses: actions/upload-artifact@v4

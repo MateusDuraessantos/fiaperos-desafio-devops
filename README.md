@@ -77,13 +77,13 @@ docker compose -p greenhouse-bdd -f docker-compose.bdd.yml down
 
 ## Executar os testes sem containers
 
-Pré-requisitos: SDK .NET 8.0.4xx, Python 3.10 ou superior e acesso ao NuGet no primeiro restore.
+Pré-requisitos: SDK .NET 8.0.4xx, PowerShell e acesso ao NuGet no primeiro restore.
 
 ```sh
-python scripts/test_bdd.py
+dotnet test Greenhouse.sln -c Release --logger "console;verbosity=detailed"
 ```
 
-No PowerShell:
+Para executar as suítes e verificar também a cobertura de todas as operações HTTP:
 
 ```powershell
 powershell -File scripts/Testar-Bdd.ps1
@@ -94,7 +94,7 @@ O script restaura dependências, compila a solução em Release, executa as duas
 Para uma instância SQL Server de testes já disponível, configure `BDD_SQLSERVER_CONNECTION` e execute:
 
 ```sh
-python scripts/test_bdd.py --provider sqlserver
+powershell -File scripts/Testar-Bdd.ps1 -Provedor sqlserver
 ```
 
 A conexão deve permitir criar e excluir bancos. Cada cenário utiliza um banco com nome aleatório `GreenhouseBdd_*`, removido ao término.
@@ -132,6 +132,8 @@ Restore → Build → Unitários e BDD com SQL Server → Cobertura → Docker b
 ```
 
 O job utiliza SQL Server 2022 como serviço. A aprovação exige suítes executadas sem falhas ou testes ignorados, pelo menos três casos BDD e teste HTTP positivo para cada operação do OpenAPI. Cada resposta deve ter status e contrato JSON Schema, ou corpo vazio, verificados.
+
+O passo **Executar cenários BDD em Gherkin e validar as APIs** apresenta o nome de cada funcionalidade e cenário, os passos Dado/Quando/Então, os resultados HTTP e a validação dos contratos. A saída detalhada dos testes é produzida pelo runner .NET/Reqnroll.
 
 Os relatórios são publicados no artefato `test-results`, inclusive em caso de falha. A matriz de cobertura aparece no resumo da execução. Os jobs de deploy dependem da aprovação do build e são executados fora de pull requests.
 

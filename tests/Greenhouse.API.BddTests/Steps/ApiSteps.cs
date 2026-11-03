@@ -14,7 +14,7 @@ using Xunit;
 namespace Greenhouse.API.BddTests.Steps;
 
 [Binding]
-public sealed class ApiSteps(ScenarioContext scenario, IReqnrollOutputHelper output)
+public sealed class ApiSteps(FeatureContext feature, ScenarioContext scenario, IReqnrollOutputHelper output)
 {
     private readonly GreenhouseFactory factory = new();
     private HttpClient client = null!;
@@ -42,6 +42,8 @@ public sealed class ApiSteps(ScenarioContext scenario, IReqnrollOutputHelper out
     [BeforeScenario]
     public async Task Start()
     {
+        output.WriteLine($"Funcionalidade: {feature.FeatureInfo.Title}");
+        output.WriteLine($"Cenário: {scenario.ScenarioInfo.Title}");
         client = factory.CreateClient(new() { AllowAutoRedirect = false });
         output.WriteLine($"Banco isolado: {factory.Provider}");
         Directory.CreateDirectory(ResultsDirectory);
