@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "id",
+    "nome",
+    "localizacao",
+    "area",
+    "tipoCultivo",
+    "ativa"
+  ],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "nome": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "localizacao": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "area": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 100000
+    },
+    "tipoCultivo": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "ativa": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}

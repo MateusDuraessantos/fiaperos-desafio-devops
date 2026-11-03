@@ -25,6 +25,7 @@ public class SensoresController(AppDbContext db) : ControllerBase
 
         var total = await query.CountAsync();
         var items = await query
+            .OrderBy(s => s.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(s => new SensorResponseViewModel

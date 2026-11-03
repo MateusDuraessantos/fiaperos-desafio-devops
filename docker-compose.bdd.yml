@@ -1,0 +1,26 @@
+services:
+  bdd-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    stop_grace_period: 60s
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: "BddSqlOnly@2026!"
+    healthcheck:
+      test: ["CMD-SHELL", "SQLCMDPASSWORD=\"$${MSSQL_SA_PASSWORD}\" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -C -b -Q 'SELECT 1' > /dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+  bdd:
+    build:
+      context: .
+      dockerfile: tests/Dockerfile
+    command: ["--provider", "sqlserver"]
+    environment:
+      BDD_SQLSERVER_CONNECTION: "Server=bdd-db,1433;Database=master;User Id=sa;Password=BddSqlOnly@2026!;TrustServerCertificate=True;Connect Timeout=10"
+    volumes:
+      - ./test-results:/workspace/test-results
+    depends_on:
+      bdd-db:
+        condition: service_healthy
