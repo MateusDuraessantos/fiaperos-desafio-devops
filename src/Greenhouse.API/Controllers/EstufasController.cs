@@ -17,6 +17,7 @@ public class EstufasController(AppDbContext db) : ControllerBase
     {
         var total = await db.Estufas.CountAsync();
         var items = await db.Estufas
+            .OrderBy(e => e.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(e => new EstufaResponseViewModel

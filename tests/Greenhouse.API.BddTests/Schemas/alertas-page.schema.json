@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "total",
+    "page",
+    "pageSize",
+    "data"
+  ],
+  "properties": {
+    "total": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "page": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "pageSize": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "data": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "estufaId",
+          "mensagem",
+          "tipo",
+          "dataCriacao",
+          "resolvido"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "estufaId": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "mensagem": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "tipo": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "dataCriacao": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resolvido": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

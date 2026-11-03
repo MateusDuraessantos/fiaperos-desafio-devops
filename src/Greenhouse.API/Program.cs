@@ -97,7 +97,10 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        db.Database.Migrate();
+        if (db.Database.IsSqlServer())
+            db.Database.Migrate();
+        else
+            db.Database.EnsureCreated();
         logger.LogInformation("Migrations aplicadas com sucesso.");
     }
     catch (Exception ex)

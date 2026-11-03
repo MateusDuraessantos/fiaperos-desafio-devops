@@ -17,6 +17,7 @@ public class AlertasController(AppDbContext db) : ControllerBase
     {
         var total = await db.Alertas.CountAsync();
         var items = await db.Alertas
+            .OrderBy(a => a.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(a => new AlertaResponseViewModel

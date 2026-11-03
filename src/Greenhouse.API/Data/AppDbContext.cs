@@ -25,6 +25,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Sensor>(e =>
         {
             e.HasKey(x => x.Id);
+            e.Property(x => x.DataLeitura).HasConversion(
+                value => value, value => DateTime.SpecifyKind(value, DateTimeKind.Utc));
             e.HasOne(x => x.Estufa)
              .WithMany(x => x.Sensores)
              .HasForeignKey(x => x.EstufaId)
@@ -34,6 +36,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Alerta>(e =>
         {
             e.HasKey(x => x.Id);
+            e.Property(x => x.DataCriacao).HasConversion(
+                value => value, value => DateTime.SpecifyKind(value, DateTimeKind.Utc));
             e.HasOne(x => x.Estufa)
              .WithMany(x => x.Alertas)
              .HasForeignKey(x => x.EstufaId)
@@ -43,6 +47,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<LeituraAmbiental>(e =>
         {
             e.HasKey(x => x.Id);
+            e.Property(x => x.DataRegistro).HasConversion(
+                value => value, value => DateTime.SpecifyKind(value, DateTimeKind.Utc));
             e.HasOne(x => x.Estufa)
              .WithMany(x => x.LeiturasAmbientais)
              .HasForeignKey(x => x.EstufaId)

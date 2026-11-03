@@ -1,24 +1,27 @@
-param([switch]$SomentePacote)
+param([switch]$SomentePacote, [switch]$ComDocker)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $artifactRoot = Join-Path $projectRoot 'artifacts'
 New-Item -ItemType Directory -Path $artifactRoot -Force | Out-Null
 $packageRoot = Join-Path $artifactRoot ('validacao-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $packageRoot | Out-Null
-$allowedRoots = @('src', 'tests', 'docs', 'scripts', '.github', 'postman_collection')
-$files = @('README.md', '.gitignore', '.env.example', 'docker-compose.yml') |
+$allowedRoots = @('src', 'tests', '.github')
+$files = @('README.md', '.gitignore', '.dockerignore', '.env.example', 'docker-compose.yml',
+    'docker-compose.bdd.yml', 'Greenhouse.sln', 'global.json', 'docs/BDD.md',
+    'scripts/test_bdd.py', 'scripts/Testar-Bdd.ps1', 'scripts/Validar-Entrega.ps1') |
     ForEach-Object { Get-Item -LiteralPath (Join-Path $projectRoot $_) }
 $files += foreach ($root in $allowedRoots) {
     Get-ChildItem -LiteralPath (Join-Path $projectRoot $root) -File -Recurse -Force |
         Where-Object {
             $_.FullName -notmatch '[\\/](bin|obj|PublishProfiles)[\\/]' -and
-            $_.Name -notmatch '^\.env($|\.)|\.(user|publishsettings|pubxml|pfx|p12|pem|key)$'
+            $_.Name -notmatch '^\.env($|\.)|\.(user|publishsettings|pubxml|pfx|p12|pem|key)$|\.feature\.cs$|\.pyc$' -and
+            $_.FullName -notmatch '[\\/]__pycache__[\\/]'
         }
 }
 Add-Type -AssemblyName System.IO.Compression
-$zipPath = Join-Path $artifactRoot ('greenhouse-' + [guid]::NewGuid().ToString('N') + '.zip')
+$zipPath = Join-Path $artifactRoot 'greenhouse-bdd-entrega.zip'
 $zip = [System.IO.Compression.ZipArchive]::new(
-    [System.IO.File]::Open($zipPath, [System.IO.FileMode]::CreateNew),
+    [System.IO.File]::Open($zipPath, [System.IO.FileMode]::Create),
     [System.IO.Compression.ZipArchiveMode]::Create)
 try {
     foreach ($file in $files) {
@@ -37,10 +40,16 @@ Write-Output "Pasta limpa: $packageRoot"
 if (!$SomentePacote) {
     Push-Location $packageRoot
     try {
-        docker compose config --quiet
-        if ($LASTEXITCODE -ne 0) { throw 'Configuracao Compose invalida.' }
-        docker compose build api
-        if ($LASTEXITCODE -ne 0) { throw 'Build Docker falhou.' }
-        Write-Output 'Compose e build validados. Execute docker compose up nessa pasta para testar a API e o banco.'
+        python scripts/test_bdd.py
+        if ($LASTEXITCODE -ne 0) { throw 'Testes na copia extraida falharam.' }
+        if ($ComDocker) {
+            docker compose config --quiet
+            if ($LASTEXITCODE -ne 0) { throw 'Configuracao Compose invalida.' }
+            docker compose build api
+            if ($LASTEXITCODE -ne 0) { throw 'Build Docker falhou.' }
+            docker compose -p greenhouse-bdd-entrega -f docker-compose.bdd.yml up --build --abort-on-container-exit --exit-code-from bdd
+            if ($LASTEXITCODE -ne 0) { throw 'BDD com SQL Server em Docker falhou.' }
+        }
+        Write-Output 'ZIP extraido e testes locais validados. Resultados em test-results/sqlite na pasta limpa.'
     } finally { Pop-Location }
 }
